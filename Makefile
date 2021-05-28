@@ -1,3 +1,3 @@
 
 run:
-	go run main.go postgresql 10
+	go run main.go postgresql 500000

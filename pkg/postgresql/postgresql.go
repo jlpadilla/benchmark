@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -10,13 +11,15 @@ import (
 )
 
 func createConn() *pgx.Conn {
-	database_url := "postgres://postgres:dev-pass!@localhost:5432/jorge-demo"
+	// start := time.Now()
+	database_url := "postgres://postgres:dev-pass!@localhost:5432/benchmark"
 	// conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	conn, err := pgx.Connect(context.Background(), database_url)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
+	// fmt.Println("Connection Took:", time.Now().Sub(start))
 	return conn
 }
 
@@ -29,7 +32,7 @@ func init() {
 	if error != nil {
 		fmt.Println("Error dropping table RESOURCES. ", error)
 	}
-	_, err := c.Exec(context.Background(), "CREATE TABLE resources(UID text PRIMARY KEY, NAME text, KIND text, Cluster text)")
+	_, err := c.Exec(context.Background(), "CREATE TABLE resources(UID text PRIMARY KEY, Cluster text, KIND text, NAME text, DATA JSON)")
 	if err != nil {
 		fmt.Println("Error creating table RESOURCES.")
 	}
@@ -43,12 +46,22 @@ func ProcessInsert(instance string, insertChan chan *generator.Record) {
 	for {
 		record := <-insertChan
 
-		batch.Queue("insert into resources(UID,Cluster,Kind,NAME) values($1,$2,$3,$4)", record.UID, record.Cluster, record.Kind, record.Name)
+		// Marshal record.Properties to JSON
+		json, err := json.Marshal(record.Properties)
+		if err != nil {
+			panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
+		}
+
+		// batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Kind, record.Name)
+		batch.Queue("insert into resources values($1,$2,$3,$4,$5)", record.UID, record.Cluster, record.Kind, record.Name, string(json))
 
 		if batch.Len()%250 == 0 {
-			// fmt.Println("Sending batch from instance: ", instance)
 			fmt.Print(".")
 			br := conn.SendBatch(context.Background(), batch)
+			res, err := br.Exec()
+			if err != nil {
+				fmt.Println("res: ", res, "  err: ", err, batch.Len())
+			}
 			br.Close()
 			batch = &pgx.Batch{}
 		}

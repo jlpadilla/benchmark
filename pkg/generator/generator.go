@@ -21,9 +21,9 @@ func Generate(instance string, numRecords int, insertChan chan *Record) {
 			Kind:    "my-kind",
 			Cluster: "my-cluster",
 			Properties: map[string]interface{}{
-				"name":       fmt.Sprintf("%s%d", "name-", i),
+				// "name":       fmt.Sprintf("%s%d", "name-", i),
+				// "_uid":       fmt.Sprintf("%s%d", "id-", i),
 				"_rbac":      fmt.Sprintf("%s%d", "rbac-", i%50),
-				"_uid":       fmt.Sprintf("%s%d", "id-", i),
 				"property0":  "value0",
 				"property1":  "value1",
 				"property2":  "value2",

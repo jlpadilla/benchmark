@@ -1,24 +1,32 @@
 # benchmark
 Benchmark database technologies.
 
+## Using this project
+1. **REQUIRED:** Setup the target database. Instructions below.
+2. `go run main.go [numRecords]`
 
-### Setup PostgresSQL
+## Setup the target database locally
+Currently only [PostgreSQL](https://www.postgresql.org/), will add others soon.
 
+### PostgresSQL
+https://www.postgresql.org/
+
+1. Start PostgreQSL in a docker container
+```
 mkdir -p ${HOME}/postgres/data
-
 docker run -d \
  --name dev-postgres \
  -e POSTGRES_PASSWORD=dev-pass! \
  -v ${HOME}/postgres/data/:/var/lib/postgresql/data \
  -p 5432:5432 \
  postgres
-
-Login to container
+```
+2. Login to the container
 ```
 $ docker exec -it dev-postgres bash
 # psql -h localhost -U postgres
 ```
-Create database
+3. Create a database
 ```
 postgres=# CREATE DATABASE benchmark;
 ```

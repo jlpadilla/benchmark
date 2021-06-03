@@ -32,7 +32,7 @@ func init() {
 	if error != nil {
 		fmt.Println("Error dropping table RESOURCES. ", error)
 	}
-	_, err := c.Exec(context.Background(), "CREATE TABLE resources(UID text PRIMARY KEY, Cluster text, KIND text, NAME text, DATA JSON)")
+	_, err := c.Exec(context.Background(), "CREATE TABLE resources(UID text PRIMARY KEY, Cluster text, KIND text, NAME text, DATA JSONB)")
 	if err != nil {
 		fmt.Println("Error creating table RESOURCES.")
 	}
@@ -55,7 +55,7 @@ func ProcessInsert(instance string, insertChan chan *generator.Record) {
 		// batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Kind, record.Name)
 		batch.Queue("insert into resources values($1,$2,$3,$4,$5)", record.UID, record.Cluster, record.Kind, record.Name, string(json))
 
-		if batch.Len()%250 == 0 {
+		if batch.Len()%300 == 0 {
 			fmt.Print(".")
 			br := conn.SendBatch(context.Background(), batch)
 			res, err := br.Exec()
@@ -78,6 +78,8 @@ func QueryRecord() {
 	// 	fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
 	// 	os.Exit(1)
 	// }
-
 	// fmt.Println(name, age)
+
+	// Sample queries
+	// SELECT * from resources WHERE data->'property1' = '2';
 }

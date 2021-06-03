@@ -20,7 +20,7 @@ func createConn() *pgx.Conn {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	// fmt.Println("Connection Took:", time.Now().Sub(start))
+	// fmt.Println("Connection Took:", time.Since(start))
 	return conn
 }
 
@@ -29,13 +29,16 @@ func init() {
 	defer c.Close(context.Background())
 
 	// Clear resources table
-	_, error := c.Exec(context.Background(), "DROP TABLE resources")
-	if error != nil {
-		fmt.Println("Error dropping table RESOURCES. ", error)
-	}
-	_, err := c.Exec(context.Background(), "CREATE TABLE resources(UID text PRIMARY KEY, Cluster text, KIND text, NAME text, DATA JSONB)")
-	if err != nil {
-		fmt.Println("Error creating table RESOURCES.")
+	tables := []string{"resources"} //, "resources0", "resources1", "resources2", "resources3", "resources4", "resources5", "resources6", "resources7"}
+	for _, table := range tables {
+		_, error := c.Exec(context.Background(), fmt.Sprintf("DROP TABLE %s", table))
+		if error != nil {
+			fmt.Println("Error dropping table. ", table, error)
+		}
+		_, err := c.Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s(UID text PRIMARY KEY, Cluster text, KIND text, NAME text, DATA JSONB)", table))
+		if err != nil {
+			fmt.Println("Error creating table ", table, error)
+		}
 	}
 
 }
@@ -54,6 +57,7 @@ func ProcessInsert(instance string, insertChan chan *generator.Record) {
 		}
 
 		// batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Kind, record.Name)
+		// batch.Queue(fmt.Sprintf("insert into resources%s values($1,$2,$3,$4,$5)", instance), record.UID, record.Cluster, record.Kind, record.Name, string(json))
 		batch.Queue("insert into resources values($1,$2,$3,$4,$5)", record.UID, record.Cluster, record.Kind, record.Name, string(json))
 
 		if batch.Len()%300 == 0 {
@@ -101,7 +105,7 @@ func executeQueryByUID(conn *pgx.Conn) {
 		fmt.Fprintf(os.Stderr, "Query by UID failed: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Query by UID took:", time.Now().Sub(start))
+	fmt.Println("Query by UID (primary key):\t\t", time.Since(start))
 }
 
 func executeQueryByJSONB(conn *pgx.Conn) {
@@ -113,7 +117,7 @@ func executeQueryByJSONB(conn *pgx.Conn) {
 		fmt.Fprintf(os.Stderr, "Query JSONB property failed: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Query by JSONB property took:", time.Now().Sub(start))
+	fmt.Println("Query by property (JSONB):\t\t", time.Since(start))
 }
 
 func executeQueryAllValues(conn *pgx.Conn) {
@@ -124,5 +128,5 @@ func executeQueryAllValues(conn *pgx.Conn) {
 		fmt.Fprintf(os.Stderr, "Query get all values for JSONB property failed: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Query all values for JSONB property took:", time.Now().Sub(start))
+	fmt.Println("Query all distinct values of property:\t", time.Since(start))
 }

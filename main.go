@@ -26,7 +26,7 @@ func main() {
 	// Generate records.
 	generateRecords(numRecords, insertChan)
 
-	fmt.Println("\nLoad DB took:", time.Now().Sub(start))
+	fmt.Println("\nLoad DB took:", time.Since(start))
 
 	fmt.Println("Waiting 10 seconds, then benchmarking queries")
 	time.Sleep(10 * time.Second)
@@ -36,10 +36,17 @@ func main() {
 }
 
 func readInputs() (targetDb string, numRecords int) {
+	if len(os.Args) < 2 {
+		fmt.Println("Must pass number of records to benchmark.")
+		fmt.Println("USAGE: go run main.go [numRecords]")
+		os.Exit(1)
+	}
 	numRecords, err := strconv.Atoi(os.Args[1])
 	if err != nil {
-		fmt.Println("usage: go run main.go [numRecords]")
-		panic("Must pass number of records to benchmark.")
+		fmt.Println("Must pass number of records to benchmark.")
+		fmt.Println("USAGE: go run main.go [numRecords]")
+		os.Exit(1)
+
 	}
 
 	return "postgresql", numRecords

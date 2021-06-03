@@ -26,7 +26,13 @@ func main() {
 	// Generate records.
 	generateRecords(numRecords, insertChan)
 
-	fmt.Println("\nTook:", time.Now().Sub(start))
+	fmt.Println("\nLoad DB took:", time.Now().Sub(start))
+
+	fmt.Println("Waiting 10 seconds, then benchmarking queries")
+	time.Sleep(10 * time.Second)
+	postgresql.BenchmarkQueries()
+
+	fmt.Println("\nDONE. Goodbye.")
 }
 
 func readInputs() (targetDb string, numRecords int) {
@@ -46,8 +52,9 @@ func startPostgre(insertChan chan *generator.Record) {
 }
 
 func generateRecords(numRecords int, insertChan chan *generator.Record) {
-	for i := 0; i < 3; i++ {
-		go generator.Generate(strconv.Itoa(i), numRecords/4, insertChan)
+	routines := 1
+	for i := 1; i < routines; i++ {
+		go generator.Generate(strconv.Itoa(i), numRecords/routines, insertChan)
 	}
-	generator.Generate("4", numRecords/4, insertChan)
+	generator.Generate(strconv.Itoa(routines), numRecords/routines, insertChan)
 }

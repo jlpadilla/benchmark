@@ -9,7 +9,6 @@ import (
 type Record struct {
 	UID        string
 	Cluster    string
-	Kind       string
 	Name       string
 	Properties map[string]interface{}
 }
@@ -20,13 +19,11 @@ func Generate(instance string, numRecords int, insertChan chan *Record) {
 		record := Record{
 			UID:     fmt.Sprintf("id-%s-%d", instance, i),
 			Name:    fmt.Sprintf("name-%d", i),
-			Kind:    gofakeit.Color(),
 			Cluster: gofakeit.City(),
 			Properties: map[string]interface{}{
-				// "name":       fmt.Sprintf("%s%d", "name-", i),
-				// "_uid":       fmt.Sprintf("%s%d", "id-", i),
 				"_rbac":   fmt.Sprintf("%s%d", "rbac-", i%50),
 				"name":    fmt.Sprintf("name-%d", i),
+				"kind":    gofakeit.Color(),
 				"counter": i,
 				"number":  gofakeit.Number(1, 9999),
 				"bool":    gofakeit.Bool(),

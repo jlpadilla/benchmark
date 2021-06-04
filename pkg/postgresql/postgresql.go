@@ -35,7 +35,7 @@ func init() {
 		if error != nil {
 			fmt.Println("Error dropping table. ", table, error)
 		}
-		_, err := c.Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s(UID text PRIMARY KEY, Cluster text, KIND text, NAME text, DATA JSONB)", table))
+		_, err := c.Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s(UID text PRIMARY KEY, Cluster text, NAME text, DATA JSONB)", table))
 		if err != nil {
 			fmt.Println("Error creating table ", table, error)
 		}
@@ -58,7 +58,7 @@ func ProcessInsert(instance string, insertChan chan *generator.Record) {
 
 		// batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Kind, record.Name)
 		// batch.Queue(fmt.Sprintf("insert into resources%s values($1,$2,$3,$4,$5)", instance), record.UID, record.Cluster, record.Kind, record.Name, string(json))
-		batch.Queue("insert into resources values($1,$2,$3,$4,$5)", record.UID, record.Cluster, record.Kind, record.Name, string(json))
+		batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Name, string(json))
 
 		if batch.Len()%300 == 0 {
 			fmt.Print(".")

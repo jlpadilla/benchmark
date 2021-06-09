@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"time"
-
-	pgx "github.com/jackc/pgx/v4"
 )
 
 /* SAMPLE QUERIES //
@@ -22,21 +20,16 @@ import (
 //
 */
 func BenchmarkQueries() {
-	conn := createConn()
-	defer conn.Close(context.Background())
-
-	executeQueryByUID(conn)
-
-	executeQueryByJSONB(conn)
-
-	executeQueryAllValues(conn)
+	executeQueryByUID()
+	executeQueryByJSONB()
+	executeQueryAllValues()
 }
 
-func executeQueryByUID(conn *pgx.Conn) {
+func executeQueryByUID() {
 	var name string
 	var data string
 	start := time.Now()
-	err := conn.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE uid=$1", "id-1-1").Scan(&name, &data)
+	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE uid=$1", "id-1-1").Scan(&name, &data)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Query by UID failed: %v\n", err)
 		os.Exit(1)
@@ -44,11 +37,11 @@ func executeQueryByUID(conn *pgx.Conn) {
 	fmt.Println("Query by UID (primary key):\t\t", time.Since(start))
 }
 
-func executeQueryByJSONB(conn *pgx.Conn) {
+func executeQueryByJSONB() {
 	var name string
 	var data string
 	start := time.Now()
-	err := conn.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE data->>'color' = $1", "Blue").Scan(&name, &data)
+	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE data->>'color' = $1", "Blue").Scan(&name, &data)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Query JSONB property failed: %v\n", err)
 		os.Exit(1)
@@ -56,10 +49,10 @@ func executeQueryByJSONB(conn *pgx.Conn) {
 	fmt.Println("Query by property (JSONB):\t\t", time.Since(start))
 }
 
-func executeQueryAllValues(conn *pgx.Conn) {
+func executeQueryAllValues() {
 	var values string
 	start := time.Now()
-	err := conn.QueryRow(context.Background(), "SELECT DISTINCT data->'color' AS color from resources").Scan(&values)
+	err := pool.QueryRow(context.Background(), "SELECT DISTINCT data->'color' AS color from resources").Scan(&values)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Query get all values for JSONB property failed: %v\n", err)
 		os.Exit(1)

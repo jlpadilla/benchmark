@@ -6,50 +6,26 @@ import (
 	"os"
 	"sync"
 
-	pgx "github.com/jackc/pgx/v4"
 	pgxpool "github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jlpadilla/benchmark/pkg/generator"
 )
 
 const databaseName = "benchmark"
 const insertType = "copy" // "batch or copy"
+const batchSize = 1000
+const maxConnections = 16
 
 var tables = []string{"resources"}
 var WG sync.WaitGroup
 var pool *pgxpool.Pool
 
-func createConn() *pgx.Conn {
-	// start := time.Now()
-	database_url := "postgres://postgres:dev-pass!@localhost:5432/" + databaseName
-	conn, err := pgx.Connect(context.Background(), database_url)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
-	}
-	// fmt.Println("Connection Took:", time.Since(start))
-	return conn
-}
-
-func createPool() {
-	// start := time.Now()
-	database_url := "postgres://postgres:dev-pass!@localhost:5432/" + databaseName
-
-	config, _ := pgxpool.ParseConfig(database_url)
-	config.MaxConns = 50
-	conn, err := pgxpool.ConnectConfig(context.Background(), config)
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
-	}
-	// fmt.Println("Connection Took:", time.Since(start))
-
-	pool = conn
-}
-
 func init() {
 	createPool()
+	initializeDB()
+}
 
+// Initialize the database. Drop existing tables and create new tables for this test.
+func initializeDB() {
 	// Clear resources table
 	for _, table := range tables {
 		_, error := pool.Exec(context.Background(), fmt.Sprintf("DROP TABLE %s", table))
@@ -61,7 +37,21 @@ func init() {
 			fmt.Println("Error creating table ", table, error)
 		}
 	}
+}
 
+// Initializes the connection pool.
+func createPool() {
+	database_url := "postgres://postgres:dev-pass!@localhost:5432/" + databaseName
+
+	config, _ := pgxpool.ParseConfig(database_url)
+	config.MaxConns = maxConnections
+	conn, err := pgxpool.ConnectConfig(context.Background(), config)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	pool = conn
 }
 
 func ProcessInsert(instance string, insertChan chan *generator.Record) {

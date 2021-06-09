@@ -9,9 +9,8 @@ import (
 	"github.com/jlpadilla/benchmark/pkg/generator"
 )
 
-// Sends INSERT commands in a batch request.
+// Process records using batched INSERT requests.
 func batchInsert(instance string, insertChan chan *generator.Record) {
-	// conn := createConn()
 	batch := &pgx.Batch{}
 
 	for {
@@ -23,11 +22,9 @@ func batchInsert(instance string, insertChan chan *generator.Record) {
 			panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
 		}
 
-		// batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Kind, record.Name)
-		// batch.Queue(fmt.Sprintf("insert into resources%s values($1,$2,$3,$4,$5)", instance), record.UID, record.Cluster, record.Kind, record.Name, string(json))
 		batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Name, string(json))
 
-		if batch.Len()%300 == 0 {
+		if batch.Len() == batchSize {
 			fmt.Print(".")
 			br := pool.SendBatch(context.Background(), batch)
 			res, err := br.Exec()
@@ -40,9 +37,10 @@ func batchInsert(instance string, insertChan chan *generator.Record) {
 	}
 }
 
-// Inserts records in bulk using the COPY command.
+// Process records in bulk using COPY.
 func copyInsert(instance string, insertChan chan *generator.Record) {
-	var inputRows = make([][]interface{}, 0)
+	inputRows := make([][]interface{}, batchSize)
+	index := 0
 	for {
 		record := <-insertChan
 
@@ -52,23 +50,23 @@ func copyInsert(instance string, insertChan chan *generator.Record) {
 			panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
 		}
 
-		row := []interface{}{record.UID, record.Cluster, record.Name, json}
-		inputRows = append(inputRows, row)
+		inputRows[index] = []interface{}{record.UID, record.Cluster, record.Name, json}
+		index++
 
-		if len(inputRows) == 1000 {
+		if index == batchSize {
 			WG.Add(1)
-			fmt.Println("Connections  MAX: ", pool.Stat().MaxConns(), "  CURRENT: ", pool.Stat().TotalConns())
-			sendUsingCopy(inputRows)
-			// WG.Done()
-			inputRows = make([][]interface{}, 0)
+			go sendUsingCopy(inputRows)
+
+			inputRows = make([][]interface{}, batchSize)
+			index = 0
 		}
 	}
 }
 
+// Load records using the COPY command.
 func sendUsingCopy(inputRows [][]interface{}) {
 	defer WG.Done()
 	// start := time.Now()
-	// fmt.Println("Conn Took:", time.Since(start))
 
 	// UID text PRIMARY KEY, Cluster text, NAME text, DATA JSONB
 	copyCount, err := pool.CopyFrom(context.Background(), pgx.Identifier{tables[0]}, []string{"uid", "cluster", "name", "data"},

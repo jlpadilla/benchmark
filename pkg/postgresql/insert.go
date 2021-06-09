@@ -10,7 +10,7 @@ import (
 )
 
 // Process records using batched INSERT requests.
-func batchInsert(instance string, insertChan chan *generator.Record) {
+func batchInsert(instance string, insertChan <-chan *generator.Record) {
 	batch := &pgx.Batch{}
 
 	for {
@@ -38,12 +38,11 @@ func batchInsert(instance string, insertChan chan *generator.Record) {
 }
 
 // Process records in bulk using COPY.
-func copyInsert(instance string, insertChan chan *generator.Record) {
+func copyInsert(instance string, insertChan <-chan *generator.Record) {
 	inputRows := make([][]interface{}, batchSize)
 	index := 0
 	for {
 		record := <-insertChan
-
 		// Marshal record.Properties to JSON
 		json, err := json.Marshal(record.Properties)
 		if err != nil {

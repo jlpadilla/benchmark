@@ -21,11 +21,11 @@ var pool *pgxpool.Pool
 
 func init() {
 	createPool()
-	initializeDB()
+	InitializeDB()
 }
 
 // Initialize the database. Drop existing tables and create new tables for this test.
-func initializeDB() {
+func InitializeDB() {
 	// Clear resources table
 	for _, table := range tables {
 		_, error := pool.Exec(context.Background(), fmt.Sprintf("DROP TABLE %s", table))

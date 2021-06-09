@@ -17,15 +17,17 @@ func main() {
 	fmt.Println("\tRecords : ", numRecords)
 
 	// Create a channel to send resources from the generator to the db insert.
-	insertChan := make(chan *generator.Record, 32)
+	insertChan := make(chan *generator.Record, 100)
 
 	// Reads the records and inserts in the target database.
 	startPostgre(insertChan)
 
 	start := time.Now()
+
 	// Generate records.
 	generateRecords(numRecords, insertChan)
 
+	postgresql.WG.Wait()
 	fmt.Println("\nLoad DB took:", time.Since(start))
 
 	fmt.Println("Waiting 10 seconds, then benchmarking queries")

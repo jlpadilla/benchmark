@@ -28,7 +28,7 @@ func batchInsert(instance string, insertChan <-chan *generator.Record) {
 			batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Name, string(json))
 		}
 
-		if batch.Len() == batchSize || !more {
+		if batch.Len() == batchSize || (!more && batch.Len() > 0) {
 			fmt.Print(".")
 			br := pool.SendBatch(context.Background(), batch)
 			res, err := br.Exec()

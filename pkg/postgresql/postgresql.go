@@ -11,7 +11,7 @@ import (
 )
 
 const databaseName = "benchmark"
-const insertType = "copy" // "batch or copy"
+const insertType = "batch" // "batch or copy"
 const batchSize = 1000
 const maxConnections = 16
 

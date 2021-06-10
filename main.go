@@ -44,9 +44,11 @@ func main() {
 		postgresql.WG.Wait()
 		fmt.Printf("\nInsert %d records took: %s", numRecords, time.Since(start))
 
+		// Benchmark queries.
 		fmt.Println("\nWaiting 10 seconds before running queries.")
 		time.Sleep(10 * time.Second)
-		postgresql.BenchmarkQueries()
+		result := postgresql.BenchmarkQueries()
+		fmt.Printf("\nQuery benchmark results:\n%s", result)
 	}
 }
 

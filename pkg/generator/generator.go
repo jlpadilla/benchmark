@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/brianvoe/gofakeit/v6"
 )
@@ -13,8 +14,11 @@ type Record struct {
 	Properties map[string]interface{}
 }
 
-func Generate(instance string, numRecords int, insertChan chan *Record) {
+var generateCounter = 0
 
+func Generate(numRecords int, insertChan chan *Record) {
+	instance := strconv.Itoa(generateCounter)
+	generateCounter++
 	for i := 0; i < numRecords; i++ {
 		record := Record{
 			UID:     fmt.Sprintf("id-%s-%d", instance, i),

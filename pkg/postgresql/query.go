@@ -3,7 +3,6 @@ package postgresql
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 )
 
@@ -31,10 +30,9 @@ func executeQueryByUID() string {
 	var name string
 	var data string
 	start := time.Now()
-	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE uid=$1", "id-1-1").Scan(&name, &data)
+	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE uid=$1", "id-0-1").Scan(&name, &data)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Query by UID failed: %v\n", err)
-		os.Exit(1)
+		return fmt.Sprintln("Query by UID (primary key):\t\t ERROR:", err)
 	}
 
 	return fmt.Sprintln("Query by UID (primary key):\t\t", time.Since(start))
@@ -46,8 +44,7 @@ func executeQueryByJSONB() string {
 	start := time.Now()
 	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE data->>'color' = $1", "Blue").Scan(&name, &data)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Query JSONB property failed: %v\n", err)
-		os.Exit(1)
+		return fmt.Sprintln("Query by property (JSONB):\t\t ERROR:", err)
 	}
 
 	return fmt.Sprintln("Query by property (JSONB):\t\t", time.Since(start))
@@ -58,8 +55,7 @@ func executeQueryAllValues() string {
 	start := time.Now()
 	err := pool.QueryRow(context.Background(), "SELECT DISTINCT data->'color' AS color from resources").Scan(&values)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Query get all values for JSONB property failed: %v\n", err)
-		os.Exit(1)
+		return fmt.Sprintln("Query all distinct values of property:\t ERROR:", err)
 	}
 
 	return fmt.Sprintln("Query all distinct values of property:\t", time.Since(start))

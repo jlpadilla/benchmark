@@ -11,20 +11,24 @@ import (
 
 // Process records using batched INSERT requests.
 func batchInsert(instance string, insertChan <-chan *generator.Record) {
+	WG.Add(1)
+	defer WG.Done()
 	batch := &pgx.Batch{}
 
 	for {
-		record := <-insertChan
+		record, more := <-insertChan
 
-		// Marshal record.Properties to JSON
-		json, err := json.Marshal(record.Properties)
-		if err != nil {
-			panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
+		if more {
+			// Marshal record.Properties to JSON
+			json, err := json.Marshal(record.Properties)
+			if err != nil {
+				panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
+			}
+
+			batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Name, string(json))
 		}
 
-		batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Name, string(json))
-
-		if batch.Len() == batchSize {
+		if batch.Len() == batchSize || !more {
 			fmt.Print(".")
 			br := pool.SendBatch(context.Background(), batch)
 			res, err := br.Exec()
@@ -34,11 +38,16 @@ func batchInsert(instance string, insertChan <-chan *generator.Record) {
 			br.Close()
 			batch = &pgx.Batch{}
 		}
+		if !more {
+			break
+		}
 	}
 }
 
 // Process records in bulk using COPY.
 func copyInsert(instance string, insertChan <-chan *generator.Record) {
+	WG.Add(1)
+	defer WG.Done()
 	inputRows := make([][]interface{}, batchSize)
 	index := 0
 	for {
@@ -50,29 +59,23 @@ func copyInsert(instance string, insertChan <-chan *generator.Record) {
 			if err != nil {
 				panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
 			}
-
 			inputRows[index] = []interface{}{record.UID, record.Cluster, record.Name, json}
 			index++
-		} else {
-			fmt.Printf("Channel closed. Flushing %d records.\n", index)
-			WG.Add(1)
-			sendUsingCopy(inputRows[0:index])
-			return
 		}
 
 		if index == batchSize {
-			WG.Add(1)
 			sendUsingCopy(inputRows)
-
 			inputRows = make([][]interface{}, batchSize)
 			index = 0
+		} else if !more {
+			sendUsingCopy(inputRows[0:index])
+			break
 		}
 	}
 }
 
 // Load records using the COPY command.
 func sendUsingCopy(inputRows [][]interface{}) {
-	defer WG.Done()
 	// start := time.Now()
 
 	// UID text PRIMARY KEY, Cluster text, NAME text, DATA JSONB

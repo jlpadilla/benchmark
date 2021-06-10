@@ -19,13 +19,15 @@ import (
 // List all properties
 //
 */
-func BenchmarkQueries() {
-	executeQueryByUID()
-	executeQueryByJSONB()
-	executeQueryAllValues()
+func BenchmarkQueries() string {
+	result := ""
+	result += executeQueryByUID()
+	result += executeQueryByJSONB()
+	result += executeQueryAllValues()
+	return result
 }
 
-func executeQueryByUID() {
+func executeQueryByUID() string {
 	var name string
 	var data string
 	start := time.Now()
@@ -34,10 +36,11 @@ func executeQueryByUID() {
 		fmt.Fprintf(os.Stderr, "Query by UID failed: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Query by UID (primary key):\t\t", time.Since(start))
+
+	return fmt.Sprintln("Query by UID (primary key):\t\t", time.Since(start))
 }
 
-func executeQueryByJSONB() {
+func executeQueryByJSONB() string {
 	var name string
 	var data string
 	start := time.Now()
@@ -46,10 +49,11 @@ func executeQueryByJSONB() {
 		fmt.Fprintf(os.Stderr, "Query JSONB property failed: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Query by property (JSONB):\t\t", time.Since(start))
+
+	return fmt.Sprintln("Query by property (JSONB):\t\t", time.Since(start))
 }
 
-func executeQueryAllValues() {
+func executeQueryAllValues() string {
 	var values string
 	start := time.Now()
 	err := pool.QueryRow(context.Background(), "SELECT DISTINCT data->'color' AS color from resources").Scan(&values)
@@ -57,5 +61,6 @@ func executeQueryAllValues() {
 		fmt.Fprintf(os.Stderr, "Query get all values for JSONB property failed: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Query all distinct values of property:\t", time.Since(start))
+
+	return fmt.Sprintln("Query all distinct values of property:\t", time.Since(start))
 }

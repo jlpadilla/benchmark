@@ -15,7 +15,7 @@ type Record struct {
 
 func Generate(instance string, numRecords int, insertChan chan *Record) {
 
-	for i := 0; i <= numRecords; i++ {
+	for i := 0; i < numRecords; i++ {
 		record := Record{
 			UID:     fmt.Sprintf("id-%s-%d", instance, i),
 			Name:    fmt.Sprintf("name-%d", i),
@@ -49,4 +49,6 @@ func Generate(instance string, numRecords int, insertChan chan *Record) {
 
 		insertChan <- &record
 	}
+
+	close(insertChan)
 }

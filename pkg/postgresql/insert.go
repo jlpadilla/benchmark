@@ -42,19 +42,27 @@ func copyInsert(instance string, insertChan <-chan *generator.Record) {
 	inputRows := make([][]interface{}, batchSize)
 	index := 0
 	for {
-		record := <-insertChan
-		// Marshal record.Properties to JSON
-		json, err := json.Marshal(record.Properties)
-		if err != nil {
-			panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
-		}
+		record, more := <-insertChan
 
-		inputRows[index] = []interface{}{record.UID, record.Cluster, record.Name, json}
-		index++
+		if more {
+			// Marshal record.Properties to JSON
+			json, err := json.Marshal(record.Properties)
+			if err != nil {
+				panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
+			}
+
+			inputRows[index] = []interface{}{record.UID, record.Cluster, record.Name, json}
+			index++
+		} else {
+			fmt.Printf("Channel closed. Flushing %d records.\n", index)
+			WG.Add(1)
+			sendUsingCopy(inputRows[0:index])
+			return
+		}
 
 		if index == batchSize {
 			WG.Add(1)
-			go sendUsingCopy(inputRows)
+			sendUsingCopy(inputRows)
 
 			inputRows = make([][]interface{}, batchSize)
 			index = 0

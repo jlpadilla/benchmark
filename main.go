@@ -11,22 +11,23 @@ import (
 	"github.com/jlpadilla/benchmark/pkg/postgresql"
 )
 
-var insertChan chan *generator.Record
 var numRecords = 100000
 var targetDb = "postgresql"
+var generateCounter = 0
 
 func main() {
-	// Create a channel to send resources from the generator to the db insert.
-	insertChan = make(chan *generator.Record, 100)
-
-	// Reads the records and inserts in the target database.
-	startPostgre(insertChan)
 
 	if len(os.Args) < 2 {
 		fmt.Println("No arguments were passed, starting web server.")
 		fmt.Println("To use as a standalone go program pass the number of records to simulate like \"go run main.go [numRecords]\"")
 		startHttpServer()
 	} else {
+
+		// Create a channel to send resources from the generator to the db insert.
+		insertChan := make(chan *generator.Record, 100)
+
+		// Reads the records and inserts in the target database.
+		startPostgre(insertChan)
 
 		targetDb, numRecords = readInputs()
 		fmt.Println("Running benchmark with:")
@@ -62,11 +63,10 @@ func startPostgre(insertChan chan *generator.Record) {
 
 func generateRecords(numRecords int, insertChan chan *generator.Record) {
 	start := time.Now()
-	routines := 1
-	for i := 1; i < routines; i++ {
-		go generator.Generate(strconv.Itoa(i), numRecords/routines, insertChan)
-	}
-	generator.Generate(strconv.Itoa(routines), numRecords/routines, insertChan)
+
+	// NOTE: I experimented with multiple generate routines, but it didn't make a difference.
+	generator.Generate(strconv.Itoa(generateCounter), numRecords, insertChan)
+	generateCounter++
 	postgresql.WG.Wait()
 	fmt.Println("\nInserting records took:", time.Since(start))
 }
@@ -87,19 +87,20 @@ func startHttpServer() {
 
 func generate(w http.ResponseWriter, req *http.Request) {
 	records, _ := strconv.Atoi(req.URL.Query()["records"][0])
-	postgresql.InitializeDB()
+
+	insertChan := make(chan *generator.Record, 100)
+	startPostgre(insertChan)
 
 	start := time.Now()
-	fmt.Println("\tDatabase: ", targetDb)
-	fmt.Println("\tRecords : ", records)
 	generateRecords(records, insertChan)
 
 	fmt.Fprintf(w, "Database:\t%s\nRecords:\t%d\nTook:\t\t%v\n", targetDb, numRecords, time.Since(start))
 }
 
 func query(w http.ResponseWriter, req *http.Request) {
-	postgresql.BenchmarkQueries()
-	fmt.Println("DONE quary()")
+	result := postgresql.BenchmarkQueries()
+	fmt.Printf("Query results:\n%s", result)
+	fmt.Fprintf(w, "Query results:\n%s", result)
 }
 
 func clearDB(w http.ResponseWriter, req *http.Request) {

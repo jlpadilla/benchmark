@@ -6,17 +6,16 @@ import (
 	"fmt"
 
 	pgx "github.com/jackc/pgx/v4"
-	"github.com/jlpadilla/benchmark/pkg/generator"
 )
 
 // Process records using batched INSERT requests.
-func batchInsert(instance string, insertChan <-chan *generator.Record) {
-	WG.Add(1)
-	defer WG.Done()
+func (t *transaction) batchInsert(instance string) { //}, insertChan <-chan *generator.Record, wg *sync.WaitGroup, batchSize int) {
+	t.WG.Add(1)
+	defer t.WG.Done()
 	batch := &pgx.Batch{}
 
 	for {
-		record, more := <-insertChan
+		record, more := <-t.InsertChan
 
 		if more {
 			// Marshal record.Properties to JSON
@@ -28,7 +27,7 @@ func batchInsert(instance string, insertChan <-chan *generator.Record) {
 			batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Name, string(json))
 		}
 
-		if batch.Len() == batchSize || (!more && batch.Len() > 0) {
+		if batch.Len() == t.batchSize || (!more && batch.Len() > 0) {
 			fmt.Print(".")
 			br := pool.SendBatch(context.Background(), batch)
 			res, err := br.Exec()
@@ -45,13 +44,13 @@ func batchInsert(instance string, insertChan <-chan *generator.Record) {
 }
 
 // Process records in bulk using COPY.
-func copyInsert(instance string, insertChan <-chan *generator.Record) {
-	WG.Add(1)
-	defer WG.Done()
-	inputRows := make([][]interface{}, batchSize)
+func (t *transaction) copyInsert(instance string) {
+	t.WG.Add(1)
+	defer t.WG.Done()
+	inputRows := make([][]interface{}, t.batchSize)
 	index := 0
 	for {
-		record, more := <-insertChan
+		record, more := <-t.InsertChan
 
 		if more {
 			// Marshal record.Properties to JSON
@@ -63,9 +62,9 @@ func copyInsert(instance string, insertChan <-chan *generator.Record) {
 			index++
 		}
 
-		if index == batchSize {
+		if index == t.batchSize {
 			sendUsingCopy(inputRows)
-			inputRows = make([][]interface{}, batchSize)
+			inputRows = make([][]interface{}, t.batchSize)
 			index = 0
 		} else if !more {
 			sendUsingCopy(inputRows[0:index])

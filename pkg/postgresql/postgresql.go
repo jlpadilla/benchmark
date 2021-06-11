@@ -4,20 +4,48 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 
 	pgxpool "github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jlpadilla/benchmark/pkg/generator"
 )
 
+// Global settings
 const databaseName = "benchmark"
-const insertType = "batch" // "batch or copy"
-const batchSize = 1000
-const maxConnections = 16
+const maxConnections = 8
 
 var tables = []string{"resources"}
-var WG sync.WaitGroup
 var pool *pgxpool.Pool
+
+// Transaction settings
+type transaction struct {
+	// Configurable fields
+	batchSize  int
+	goRoutines int
+	insertType string
+	// Internal fields
+	InsertChan chan *generator.Record
+	UpdateChan chan *generator.Record
+	DeleteChan chan *generator.Record
+	WG         *sync.WaitGroup
+}
+
+func NewTransaction() *transaction {
+	t := &transaction{
+		// Configurable fields
+		batchSize:  1000,
+		goRoutines: 8,
+		insertType: "batch",
+		// Internal fields
+		InsertChan: make(chan *generator.Record, 100),
+		UpdateChan: make(chan *generator.Record, 100),
+		DeleteChan: make(chan *generator.Record, 100),
+		WG:         &sync.WaitGroup{},
+	}
+	t.startConnectors()
+	return t
+}
 
 func init() {
 	createPool()
@@ -54,10 +82,12 @@ func createPool() {
 	pool = conn
 }
 
-func ProcessInsert(instance string, insertChan chan *generator.Record) {
-	if insertType == "batch" {
-		batchInsert(instance, insertChan)
-	} else {
-		copyInsert(instance, insertChan)
+func (t *transaction) startConnectors() {
+	for i := 0; i < t.goRoutines; i++ {
+		if t.insertType == "batch" {
+			go t.batchInsert(strconv.Itoa(i))
+		} else {
+			go t.copyInsert(strconv.Itoa(i))
+		}
 	}
 }

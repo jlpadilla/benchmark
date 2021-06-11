@@ -95,7 +95,8 @@ func generate(w http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	generator.Generate(insert, update, delete, postgre.InsertChan, postgre.UpdateChan, postgre.DeleteChan)
 	postgre.WG.Wait()
-	fmt.Fprintf(w, "Database:\t%s\nInsert:\t\t%d\nTook:\t\t%v\n", targetDb, insert, time.Since(start))
+	fmt.Printf("DONE\n")
+	fmt.Fprintf(w, "Database:\t%s\nInsert:\t\t%d\nUpdate:\t\t%d\nDelete:\t\t%d\nTook:\t\t%v\n", targetDb, insert, update, delete, time.Since(start))
 }
 
 func query(w http.ResponseWriter, req *http.Request) {

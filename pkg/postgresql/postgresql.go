@@ -12,6 +12,7 @@ import (
 )
 
 // Global settings
+const postgrePW = "dev-pass!"
 const databaseName = "benchmark"
 const maxConnections = 8
 
@@ -60,7 +61,7 @@ func InitializeDB() {
 		if error != nil {
 			fmt.Println("Error dropping table. ", table, error)
 		}
-		_, err := pool.Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s(UID text PRIMARY KEY, Cluster text, NAME text, DATA JSONB)", table))
+		_, err := pool.Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s(UID text PRIMARY KEY, CLUSTER text, NAME text, DATA JSONB)", table))
 		if err != nil {
 			fmt.Println("Error creating table ", table, error)
 		}
@@ -69,8 +70,7 @@ func InitializeDB() {
 
 // Initializes the connection pool.
 func createPool() {
-	database_url := "postgres://postgres:dev-pass!@localhost:5432/" + databaseName
-
+	database_url := "postgres://postgres:" + postgrePW + "@localhost:5432/" + databaseName
 	config, _ := pgxpool.ParseConfig(database_url)
 	config.MaxConns = maxConnections
 	conn, err := pgxpool.ConnectConfig(context.Background(), config)
@@ -89,35 +89,7 @@ func (t *transaction) startConnectors() {
 		} else {
 			go t.copyInsert(strconv.Itoa(i))
 		}
-		go t.update()
+		go t.batchUpdate()
 		go t.delete()
-	}
-}
-
-func (t *transaction) update() {
-	t.WG.Add(1)
-	defer t.WG.Done()
-	for {
-		record, more := <-t.UpdateChan
-		if !more {
-			break
-		}
-		if record.UID != "" {
-			fmt.Print("*")
-		}
-	}
-}
-
-func (t *transaction) delete() {
-	t.WG.Add(1)
-	defer t.WG.Done()
-	for {
-		record, more := <-t.DeleteChan
-		if !more {
-			break
-		}
-		if record != "" {
-			fmt.Print("-")
-		}
 	}
 }

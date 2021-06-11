@@ -26,7 +26,11 @@ docker run -d \
 $ docker exec -it dev-postgres bash
 # psql -h localhost -U postgres
 ```
-3. Create a database
+3. Create a database named benchmark
 ```
 postgres=# CREATE DATABASE benchmark;
+```
+4. Use database
+```
+\c benchmark
 ```

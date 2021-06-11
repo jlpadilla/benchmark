@@ -27,7 +27,7 @@ type transaction struct {
 	// Internal fields
 	InsertChan chan *generator.Record
 	UpdateChan chan *generator.Record
-	DeleteChan chan *generator.Record
+	DeleteChan chan string
 	WG         *sync.WaitGroup
 }
 
@@ -40,7 +40,7 @@ func NewTransaction() *transaction {
 		// Internal fields
 		InsertChan: make(chan *generator.Record, 100),
 		UpdateChan: make(chan *generator.Record, 100),
-		DeleteChan: make(chan *generator.Record, 100),
+		DeleteChan: make(chan string, 100),
 		WG:         &sync.WaitGroup{},
 	}
 	t.startConnectors()
@@ -88,6 +88,36 @@ func (t *transaction) startConnectors() {
 			go t.batchInsert(strconv.Itoa(i))
 		} else {
 			go t.copyInsert(strconv.Itoa(i))
+		}
+		go t.update()
+		go t.delete()
+	}
+}
+
+func (t *transaction) update() {
+	t.WG.Add(1)
+	defer t.WG.Done()
+	for {
+		record, more := <-t.UpdateChan
+		if !more {
+			break
+		}
+		if record.UID != "" {
+			fmt.Print("*")
+		}
+	}
+}
+
+func (t *transaction) delete() {
+	t.WG.Add(1)
+	defer t.WG.Done()
+	for {
+		record, more := <-t.DeleteChan
+		if !more {
+			break
+		}
+		if record != "" {
+			fmt.Print("-")
 		}
 	}
 }

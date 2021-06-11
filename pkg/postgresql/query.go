@@ -30,7 +30,7 @@ func executeQueryByUID() string {
 	var name string
 	var data string
 	start := time.Now()
-	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE uid=$1", "id-0-1").Scan(&name, &data)
+	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE uid=$1", "id-1").Scan(&name, &data)
 	if err != nil {
 		return fmt.Sprintln("Query by UID (primary key):\t\t ERROR:", err)
 	}

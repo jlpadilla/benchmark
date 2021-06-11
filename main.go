@@ -21,7 +21,7 @@ func main() {
 
 		fmt.Println("\nStarting web server at localhost:8090")
 		fmt.Println("\nSample curl commands:")
-		fmt.Println("\tcurl 'localhost:8090/generate?insert=100000'")
+		fmt.Println("\tcurl 'localhost:8090/generate?insert=100000&update=100&delete=100'")
 		fmt.Println("\tcurl localhost:8090/query")
 		fmt.Println("\tcurl localhost:8090/clear")
 		fmt.Println("")
@@ -36,7 +36,7 @@ func main() {
 
 		// Start generating records.
 		start := time.Now()
-		generator.Generate(insert, postgre.InsertChan)
+		generator.Generate(insert, 0, 0, postgre.InsertChan, postgre.InsertChan, postgre.DeleteChan)
 		postgre.WG.Wait()
 		fmt.Printf("\nInsert %d records took: %s", insert, time.Since(start))
 
@@ -79,12 +79,23 @@ func generate(w http.ResponseWriter, req *http.Request) {
 	if len(insertQuery) > 0 {
 		insert, _ = strconv.Atoi(req.URL.Query()["insert"][0])
 	}
+	update := 0
+	updateQuery := req.URL.Query()["update"]
+	if len(updateQuery) > 0 {
+		update, _ = strconv.Atoi(req.URL.Query()["update"][0])
+	}
+	delete := 0
+	deleteQuery := req.URL.Query()["delete"]
+	if len(deleteQuery) > 0 {
+		delete, _ = strconv.Atoi(req.URL.Query()["delete"][0])
+	}
+
 	postgre := postgresql.NewTransaction()
 
 	start := time.Now()
-	generator.Generate(insert, postgre.InsertChan)
+	generator.Generate(insert, update, delete, postgre.InsertChan, postgre.UpdateChan, postgre.DeleteChan)
 	postgre.WG.Wait()
-	fmt.Fprintf(w, "Database:\t%s\tInsertt:\t%d\nTook:\t\t%v\n", targetDb, insert, time.Since(start))
+	fmt.Fprintf(w, "Database:\t%s\nInsert:\t\t%d\nTook:\t\t%v\n", targetDb, insert, time.Since(start))
 }
 
 func query(w http.ResponseWriter, req *http.Request) {

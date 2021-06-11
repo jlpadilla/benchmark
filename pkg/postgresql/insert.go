@@ -9,7 +9,7 @@ import (
 )
 
 // Process records using batched INSERT requests.
-func (t *transaction) batchInsert(instance string) { //}, insertChan <-chan *generator.Record, wg *sync.WaitGroup, batchSize int) {
+func (t *transaction) batchInsert(instance string) {
 	t.WG.Add(1)
 	defer t.WG.Done()
 	batch := &pgx.Batch{}
@@ -28,7 +28,7 @@ func (t *transaction) batchInsert(instance string) { //}, insertChan <-chan *gen
 		}
 
 		if batch.Len() == t.batchSize || (!more && batch.Len() > 0) {
-			fmt.Print(".")
+			fmt.Print("+")
 			br := pool.SendBatch(context.Background(), batch)
 			res, err := br.Exec()
 			if err != nil {
@@ -87,6 +87,6 @@ func sendUsingCopy(inputRows [][]interface{}) {
 		fmt.Printf("Expected CopyFrom to return %d copied rows, but got %d", len(inputRows), copyCount)
 	}
 
-	fmt.Print(".")
+	fmt.Print("+")
 	// fmt.Println("COPY Took:", time.Since(start))
 }

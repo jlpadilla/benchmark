@@ -90,6 +90,6 @@ func (t *transaction) startConnectors() {
 			go t.copyInsert(strconv.Itoa(i))
 		}
 		go t.batchUpdate()
-		go t.delete()
+		go t.batchDelete()
 	}
 }

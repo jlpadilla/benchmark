@@ -8,6 +8,11 @@ Benchmark database technologies.
 ## Setup the target database locally
 Currently only [PostgreSQL](https://www.postgresql.org/), will add others soon.
 
+### Redisgraph
+```
+docker run -p 6379:6379 -it --rm redislabs/redisgraph
+```
+
 ### PostgresSQL
 https://www.postgresql.org/
 

@@ -32,18 +32,19 @@ func main() {
 		fmt.Println("\tDatabase: ", targetDb)
 		fmt.Println("\tInsert : ", insert)
 
-		postgre := postgresql.NewTransaction()
+		sim := postgresql.NewTransaction()
+		// sim = redisgraph.NewTransaction()
 
 		// Start generating records.
 		start := time.Now()
-		generator.Generate(insert, 0, 0, postgre.InsertChan, postgre.InsertChan, postgre.DeleteChan)
-		postgre.WG.Wait()
+		generator.Generate(insert, 0, 0, sim.InsertChan, sim.InsertChan, sim.DeleteChan)
+		sim.WG.Wait()
 		fmt.Printf("\nInsert %d records took: %s", insert, time.Since(start))
 
 		// Benchmark queries.
 		fmt.Println("\nWaiting 5 seconds before running queries.")
 		time.Sleep(5 * time.Second)
-		result := postgresql.BenchmarkQueries()
+		result := sim.BenchmarkQueries()
 		fmt.Printf("\nQuery benchmark results:\n%s", result)
 	}
 }

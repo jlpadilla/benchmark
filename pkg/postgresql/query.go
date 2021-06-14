@@ -18,7 +18,7 @@ import (
 // List all properties
 //
 */
-func BenchmarkQueries() string {
+func (t *transaction) BenchmarkQueries() string {
 	result := ""
 	result += executeQueryByUID()
 	result += executeQueryByJSONB()

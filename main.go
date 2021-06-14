@@ -33,7 +33,7 @@ func main() {
 		fmt.Println("\tInsert : ", insert)
 
 		sim := postgresql.NewTransaction()
-		// sim = redisgraph.NewTransaction()
+		// sim := redisgraph.NewTransaction()
 
 		// Start generating records.
 		start := time.Now()
@@ -101,7 +101,8 @@ func generate(w http.ResponseWriter, req *http.Request) {
 }
 
 func query(w http.ResponseWriter, req *http.Request) {
-	result := postgresql.BenchmarkQueries()
+	sim := postgresql.NewTransaction()
+	result := sim.BenchmarkQueries()
 	fmt.Printf("Query results:\n%s", result)
 	fmt.Fprintf(w, "Query results:\n%s", result)
 }

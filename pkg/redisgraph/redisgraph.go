@@ -3,6 +3,7 @@ package redisgraph
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
@@ -84,7 +85,9 @@ func testRedisConnection(c redis.Conn, t time.Time) error {
 }
 
 func (t *transaction) startConnectors() {
-	go t.batchInsert("0")
+	for i := 0; i < t.goRoutines; i++ {
+		go t.batchInsert(strconv.Itoa(i))
+	}
 	// for i := 0; i < t.goRoutines; i++ {
 	// 	if t.insertType == "batch" {
 	// 		go t.batchInsert(strconv.Itoa(i))

@@ -31,7 +31,6 @@ func (t *transaction) batchInsert(instance string) {
 		}
 
 		encodedProps, err := encodeProperties(record.Properties)
-		// fmt.Println("encodedProps:", encodedProps, err)
 		if err != nil {
 			fmt.Println("Cannot encode resource ", record.UID, ", excluding it from insertion: ", err)
 			// encodingErrors[resource.UID] = err
@@ -50,11 +49,8 @@ func (t *transaction) batchInsert(instance string) {
 
 		resourceStrings = append(resourceStrings, resource)
 
-		// resourceStrings = append(resourceStrings, fmt.Sprintf("({uid: '%s' })", record.UID))
-
 		if len(resourceStrings) == t.batchSize {
 			q := fmt.Sprintf("%s %s", "CREATE", strings.Join(resourceStrings, ", "))
-			// fmt.Println(q)
 			_, err := g.Query(q)
 
 			if err != nil {

@@ -9,7 +9,6 @@ import (
 
 	"github.com/jlpadilla/benchmark/pkg/generator"
 	"github.com/jlpadilla/benchmark/pkg/postgresql"
-	"github.com/jlpadilla/benchmark/pkg/redisgraph"
 	"github.com/jlpadilla/benchmark/pkg/server"
 )
 
@@ -67,43 +66,11 @@ func readInputs() (targetDb string, numRecords int) {
 //
 
 func startHttpServer() {
-	http.HandleFunc("/clear", clearDB)
-	http.HandleFunc("/generate", generate)
-	http.HandleFunc("/query", query)
+	http.HandleFunc("/clear", server.ClearDB)
+	http.HandleFunc("/generate", server.Generate)
+	http.HandleFunc("/query", server.Query)
 	err := http.ListenAndServe(":8090", nil)
 	if err != nil {
 		fmt.Println("Error starting http server.")
 	}
-}
-
-func generate(w http.ResponseWriter, req *http.Request) {
-	opts := server.ParseQuery(req)
-	fmt.Printf("Starting with options: %+v", opts)
-	start := time.Now()
-
-	switch opts.Database {
-	case "postgresql":
-		sim := postgresql.NewTransaction()
-		generator.Generate(opts.Insert, opts.Update, opts.Delete, sim.InsertChan, sim.UpdateChan, sim.DeleteChan)
-		sim.WG.Wait()
-	case "redisgraph":
-		sim := redisgraph.NewTransaction()
-		generator.Generate(opts.Insert, opts.Update, opts.Delete, sim.InsertChan, sim.UpdateChan, sim.DeleteChan)
-		sim.WG.Wait()
-	default:
-		fmt.Println("\nDatabase not supported: ", opts.Database)
-	}
-	fmt.Printf("DONE\n")
-	fmt.Fprintf(w, "Options: %+v\nTook:\t\t%v\n", opts, time.Since(start))
-}
-
-func query(w http.ResponseWriter, req *http.Request) {
-	sim := postgresql.NewTransaction()
-	result := sim.BenchmarkQueries()
-	fmt.Printf("Query results:\n%s", result)
-	fmt.Fprintf(w, "Query results:\n%s", result)
-}
-
-func clearDB(w http.ResponseWriter, req *http.Request) {
-	postgresql.InitializeDB()
 }

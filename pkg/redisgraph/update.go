@@ -18,7 +18,7 @@ func (t *transaction) batchUpdate() {
 	// resourceStrings := []string{}
 
 	for {
-		_, more := <-t.DeleteChan
+		_, more := <-t.UpdateChan
 
 		// resourceStrings = append(resourceStrings, record)
 

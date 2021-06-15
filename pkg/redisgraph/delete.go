@@ -22,11 +22,11 @@ func (t *transaction) batchDelete() {
 
 	for {
 		record, more := <-t.DeleteChan
-
-		uids = append(uids, record)
-
-		if len(uids) == t.batchSize || !more {
-			q := fmt.Sprintf("MATCH n WHERE n IN [%s] DELETE n", strings.Join(uids, ", "))
+		if more {
+			uids = append(uids, fmt.Sprintf("'%s'", record))
+		}
+		if len(uids) == t.options.BatchSize || (!more && len(uids) > 0) {
+			q := fmt.Sprintf("MATCH (n) WHERE n._uid IN [%s] DELETE n", strings.Join(uids, ", "))
 			_, err := g.Query(q)
 
 			if err != nil {

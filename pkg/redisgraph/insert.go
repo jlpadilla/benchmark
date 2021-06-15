@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jlpadilla/benchmark/pkg/generator"
 	rg "github.com/redislabs/redisgraph-go"
 )
 
@@ -20,37 +21,26 @@ func (t *transaction) batchInsert(instance string) {
 		Conn: conn,
 		Id:   GRAPH_NAME,
 	}
-
 	resourceStrings := []string{}
 
 	for {
 		record, more := <-t.InsertChan
 
 		if more {
-			encodedProps, err := encodeProperties(record.Properties)
+			resource, err := encodeRecord(record)
 			if err != nil {
 				fmt.Println("Cannot encode resource ", record.UID, ", excluding it from insertion: ", err)
 				continue
 			}
-			propStrings := []string{}
-			for k, v := range encodedProps {
-				switch typed := v.(type) { // At this point it's either string or int64. Need to wrap in quotes if it's string
-				case int64:
-					propStrings = append(propStrings, fmt.Sprintf("%s:%d", k, typed)) // e.g. key>:<value>
-				default:
-					propStrings = append(propStrings, fmt.Sprintf("%s:'%s'", k, typed)) // e.g. <key>:'<value>'
-				}
-			}
-			resource := fmt.Sprintf("(:%s {_uid:'%s', %s})", record.Properties["kind"], record.UID, strings.Join(propStrings, ", ")) // e.g. (:Pod {_uid: 'abc123', prop1:5, prop2:'cheese'})
 
 			resourceStrings = append(resourceStrings, resource)
 		}
-		if len(resourceStrings) == t.batchSize || !more {
-			q := fmt.Sprintf("%s %s", "CREATE", strings.Join(resourceStrings, ", "))
+		if len(resourceStrings) == t.options.BatchSize || (!more && len(resourceStrings) > 0) {
+			q := fmt.Sprintf("CREATE %s", strings.Join(resourceStrings, ", "))
 			_, err := g.Query(q)
 
 			if err != nil {
-				fmt.Println("error: ", err)
+				fmt.Println("Redisgraph error on insert: ", err)
 			}
 			resourceStrings = []string{}
 		}
@@ -60,6 +50,27 @@ func (t *transaction) batchInsert(instance string) {
 
 	}
 
+}
+
+// --------  HELPER FUNCTIONS ---------------
+
+func encodeRecord(record *generator.Record) (string, error) {
+	encodedProps, err := encodeProperties(record.Properties)
+	if err != nil {
+		// fmt.Println("Cannot encode resource ", record.UID, ", excluding it from insertion: ", err)
+		return "", err
+	}
+	propStrings := []string{}
+	for k, v := range encodedProps {
+		switch typed := v.(type) { // At this point it's either string or int64. Need to wrap in quotes if it's string
+		case int64:
+			propStrings = append(propStrings, fmt.Sprintf("%s:%d", k, typed)) // e.g. key>:<value>
+		default:
+			propStrings = append(propStrings, fmt.Sprintf("%s:'%s'", k, typed)) // e.g. <key>:'<value>'
+		}
+	}
+	resource := fmt.Sprintf("(:%s {_uid:'%s', %s})", record.Properties["kind"], record.UID, strings.Join(propStrings, ", "))
+	return resource, nil
 }
 
 func encodeProperties(props map[string]interface{}) (map[string]interface{}, error) {

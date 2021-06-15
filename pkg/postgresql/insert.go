@@ -24,7 +24,10 @@ func (t *transaction) batchInsert(instance string) {
 				panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
 			}
 
-			batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Name, string(json))
+			batch.Queue("INSERT into resources values($1,$2,$3)", record.UID, record.Cluster, string(json))
+			// Use code below to separate records in multiple tables.
+			// q := fmt.Sprintf("INSERT INTO %s values($1,$2,$3)", record.Cluster)
+			// batch.Queue(q, record.UID, record.Cluster, string(json))
 		}
 
 		if batch.Len() == t.options.BatchSize || (!more && batch.Len() > 0) {
@@ -58,7 +61,7 @@ func (t *transaction) copyInsert(instance string) {
 			if err != nil {
 				panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
 			}
-			inputRows[index] = []interface{}{record.UID, record.Cluster, record.Name, json}
+			inputRows[index] = []interface{}{record.UID, record.Cluster, json}
 			index++
 		}
 
@@ -78,7 +81,7 @@ func sendUsingCopy(inputRows [][]interface{}) {
 	// start := time.Now()
 
 	// UID text PRIMARY KEY, Cluster text, NAME text, DATA JSONB
-	copyCount, err := pool.CopyFrom(context.Background(), pgx.Identifier{tables[0]}, []string{"uid", "cluster", "name", "data"},
+	copyCount, err := pool.CopyFrom(context.Background(), pgx.Identifier{tables[0]}, []string{"uid", "cluster", "data"},
 		pgx.CopyFromRows(inputRows))
 
 	if err != nil {

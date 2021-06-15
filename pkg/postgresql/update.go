@@ -12,7 +12,7 @@ func (t *transaction) batchUpdate() {
 	t.Simulation.WG.Add(1)
 	defer t.Simulation.WG.Done()
 	batch := &pgx.Batch{}
-	queryTemplate := "UPDATE " + tables[0] + " SET CLUSTER=$2, NAME=$3, DATA=$4 WHERE UID=$1"
+	queryTemplate := "UPDATE " + tables[0] + " SET CLUSTER=$2, DATA=$3 WHERE UID=$1"
 
 	for {
 		record, more := <-t.Simulation.UpdateChan
@@ -24,7 +24,7 @@ func (t *transaction) batchUpdate() {
 				panic(fmt.Sprintf("Error Marshaling json. %v %v", err, json))
 			}
 
-			batch.Queue(queryTemplate, record.UID, record.Cluster, record.Name, string(json))
+			batch.Queue(queryTemplate, record.UID, record.Cluster, string(json))
 		}
 
 		if batch.Len() == t.options.BatchSize || (!more && batch.Len() > 0) {

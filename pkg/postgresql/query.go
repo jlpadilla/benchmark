@@ -27,10 +27,9 @@ func (t *transaction) BenchmarkQueries() string {
 }
 
 func executeQueryByUID() string {
-	var name string
 	var data string
 	start := time.Now()
-	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE uid=$1", "id-1").Scan(&name, &data)
+	err := pool.QueryRow(context.Background(), "SELECT data FROM resources WHERE uid=$1", "id_1").Scan(&data)
 	if err != nil {
 		return fmt.Sprintln("Query by UID (primary key):\t\t ERROR:", err)
 	}
@@ -39,10 +38,9 @@ func executeQueryByUID() string {
 }
 
 func executeQueryByJSONB() string {
-	var name string
 	var data string
 	start := time.Now()
-	err := pool.QueryRow(context.Background(), "SELECT name,data FROM resources WHERE data->>'color' = $1", "Blue").Scan(&name, &data)
+	err := pool.QueryRow(context.Background(), "SELECT data FROM resources WHERE data->>'color' = $1", "Blue").Scan(&data)
 	if err != nil {
 		return fmt.Sprintln("Query by property (JSONB):\t\t ERROR:", err)
 	}

@@ -10,13 +10,6 @@ import (
 func (t *transaction) batchDelete() {
 	t.Simulation.WG.Add(1)
 	defer t.Simulation.WG.Done()
-	conn := Pool.Get()
-	defer conn.Close()
-
-	g := rg.Graph{
-		Conn: conn,
-		Id:   GRAPH_NAME,
-	}
 
 	uids := []string{}
 
@@ -26,12 +19,19 @@ func (t *transaction) batchDelete() {
 			uids = append(uids, fmt.Sprintf("'%s'", record))
 		}
 		if len(uids) == t.options.BatchSize || (!more && len(uids) > 0) {
+			conn := Pool.Get()
+			g := rg.Graph{
+				Conn: conn,
+				Id:   GRAPH_NAME,
+			}
 			q := fmt.Sprintf("MATCH (n) WHERE n._uid IN [%s] DELETE n", strings.Join(uids, ", "))
 			_, err := g.Query(q)
 
 			if err != nil {
 				fmt.Println("error: ", err)
 			}
+			fmt.Print("-")
+			conn.Close()
 			uids = []string{}
 		}
 		if !more {

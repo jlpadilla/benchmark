@@ -1,12 +1,14 @@
 # benchmark
-Benchmark database technologies.
+Benchmark database technologies. [See results here.](./RESULTS.md)
 
 ## Using this project
 1. **REQUIRED:** Setup the target database. Instructions below.
-2. `go run main.go [numRecords]`
+2. `go run main.go`
 
 ## Setup the target database locally
-Currently only [PostgreSQL](https://www.postgresql.org/), will add others soon.
+- [PostgreSQL](#PostreSQL)
+- [Redisgraph](#Redisgraph)
+
 
 ### Redisgraph
 ```

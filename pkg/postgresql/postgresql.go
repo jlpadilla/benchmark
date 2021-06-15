@@ -50,11 +50,24 @@ func InitializeDB() {
 		if error != nil {
 			fmt.Println("Error dropping table. ", table, error)
 		}
-		_, err := pool.Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s(UID text PRIMARY KEY, CLUSTER text, NAME text, DATA JSONB)", table))
+		_, err := pool.Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s(UID text PRIMARY KEY, CLUSTER text, DATA JSONB)", table))
 		if err != nil {
 			fmt.Println("Error creating table ", table, error)
 		}
 	}
+
+	// Use 100 tables
+	// for i := 0; i < 100; i++ {
+	// 	table := fmt.Sprintf("cluster_%d", i)
+	// 	_, error := pool.Exec(context.Background(), fmt.Sprintf("DROP TABLE %s", table))
+	// 	if error != nil {
+	// 		fmt.Println("Error dropping table. ", table, error)
+	// 	}
+	// 	_, err := pool.Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s(UID text PRIMARY KEY, CLUSTER text, DATA JSONB)", table))
+	// 	if err != nil {
+	// 		fmt.Println("Error creating table ", table, error)
+	// 	}
+	// }
 }
 
 // Initializes the connection pool.

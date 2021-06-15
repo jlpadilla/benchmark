@@ -69,7 +69,17 @@ func ParseQuery(req *http.Request) generator.Options {
 	}
 
 	batchSize := 1000
+	batchQuery := req.URL.Query()["batchsize"]
+	if len(batchQuery) > 0 {
+		batchSize, _ = strconv.Atoi(req.URL.Query()["batchsize"][0])
+	}
+
 	goRoutines := 8
+	routinesQuery := req.URL.Query()["goroutines"]
+	if len(routinesQuery) > 0 {
+		goRoutines, _ = strconv.Atoi(req.URL.Query()["goroutines"][0])
+	}
+
 	insertType := "batch"
 
 	return generator.Options{

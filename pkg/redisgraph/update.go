@@ -7,8 +7,8 @@ package redisgraph
 func (t *transaction) batchUpdate() {
 	t.Simulation.WG.Add(1)
 	defer t.Simulation.WG.Done()
-	conn := Pool.Get()
-	defer conn.Close()
+	// conn := Pool.Get()
+	// defer conn.Close()
 
 	// g := rg.Graph{
 	// 	Conn: conn,

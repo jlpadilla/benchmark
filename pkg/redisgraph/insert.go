@@ -14,13 +14,7 @@ import (
 func (t *transaction) batchInsert(instance string) {
 	t.Simulation.WG.Add(1)
 	defer t.Simulation.WG.Done()
-	conn := Pool.Get()
-	defer conn.Close()
 
-	g := rg.Graph{
-		Conn: conn,
-		Id:   GRAPH_NAME,
-	}
 	resourceStrings := []string{}
 
 	for {
@@ -36,12 +30,19 @@ func (t *transaction) batchInsert(instance string) {
 			resourceStrings = append(resourceStrings, resource)
 		}
 		if len(resourceStrings) == t.options.BatchSize || (!more && len(resourceStrings) > 0) {
+			conn := Pool.Get()
+			g := rg.Graph{
+				Conn: conn,
+				Id:   GRAPH_NAME,
+			}
 			q := fmt.Sprintf("CREATE %s", strings.Join(resourceStrings, ", "))
 			_, err := g.Query(q)
 
 			if err != nil {
 				fmt.Println("Redisgraph error on insert: ", err)
 			}
+			fmt.Print("+")
+			conn.Close()
 			resourceStrings = []string{}
 		}
 		if !more {

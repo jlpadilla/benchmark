@@ -25,14 +25,13 @@ func newRecord(index int, uid string) Record {
 	mux.Lock()
 	defer mux.Unlock()
 	if uid == "" {
-		uid = fmt.Sprintf("id-%d", recordCounter)
+		uid = fmt.Sprintf("id_%d", recordCounter)
 		recordCounter++
 	}
 
 	return Record{
 		UID:     uid,
-		Name:    fmt.Sprintf("name-%d", index),
-		Cluster: fmt.Sprintf("cluster-%d", gofakeit.Number(0, 100)),
+		Cluster: fmt.Sprintf("cluster_%d", gofakeit.Number(0, 99)),
 		Properties: map[string]interface{}{
 			"name":    fmt.Sprintf("name-%d", index),
 			"kind":    gofakeit.Color(),

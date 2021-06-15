@@ -12,8 +12,8 @@ import (
 )
 
 func (t *transaction) batchInsert(instance string) {
-	t.WG.Add(1)
-	defer t.WG.Done()
+	t.Simulation.WG.Add(1)
+	defer t.Simulation.WG.Done()
 	conn := Pool.Get()
 	defer conn.Close()
 
@@ -24,7 +24,7 @@ func (t *transaction) batchInsert(instance string) {
 	resourceStrings := []string{}
 
 	for {
-		record, more := <-t.InsertChan
+		record, more := <-t.Simulation.InsertChan
 
 		if more {
 			resource, err := encodeRecord(record)

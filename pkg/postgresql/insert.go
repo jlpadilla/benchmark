@@ -10,12 +10,12 @@ import (
 
 // Process records using batched INSERT requests.
 func (t *transaction) batchInsert(instance string) {
-	t.WG.Add(1)
-	defer t.WG.Done()
+	t.Simulation.WG.Add(1)
+	defer t.Simulation.WG.Done()
 	batch := &pgx.Batch{}
 
 	for {
-		record, more := <-t.InsertChan
+		record, more := <-t.Simulation.InsertChan
 
 		if more {
 			// Marshal record.Properties to JSON
@@ -27,7 +27,7 @@ func (t *transaction) batchInsert(instance string) {
 			batch.Queue("insert into resources values($1,$2,$3,$4)", record.UID, record.Cluster, record.Name, string(json))
 		}
 
-		if batch.Len() == t.batchSize || (!more && batch.Len() > 0) {
+		if batch.Len() == t.options.BatchSize || (!more && batch.Len() > 0) {
 			fmt.Print("+")
 			br := pool.SendBatch(context.Background(), batch)
 			res, err := br.Exec()
@@ -45,12 +45,12 @@ func (t *transaction) batchInsert(instance string) {
 
 // Process records in bulk using COPY.
 func (t *transaction) copyInsert(instance string) {
-	t.WG.Add(1)
-	defer t.WG.Done()
-	inputRows := make([][]interface{}, t.batchSize)
+	t.Simulation.WG.Add(1)
+	defer t.Simulation.WG.Done()
+	inputRows := make([][]interface{}, t.options.BatchSize)
 	index := 0
 	for {
-		record, more := <-t.InsertChan
+		record, more := <-t.Simulation.InsertChan
 
 		if more {
 			// Marshal record.Properties to JSON
@@ -62,9 +62,9 @@ func (t *transaction) copyInsert(instance string) {
 			index++
 		}
 
-		if index == t.batchSize {
+		if index == t.options.BatchSize {
 			sendUsingCopy(inputRows)
-			inputRows = make([][]interface{}, t.batchSize)
+			inputRows = make([][]interface{}, t.options.BatchSize)
 			index = 0
 		} else if !more {
 			sendUsingCopy(inputRows[0:index])

@@ -8,19 +8,19 @@ import (
 )
 
 func (t *transaction) batchDelete() {
-	t.WG.Add(1)
-	defer t.WG.Done()
+	t.Simulation.WG.Add(1)
+	defer t.Simulation.WG.Done()
 	batch := &pgx.Batch{}
 	queryTemplate := "DELETE FROM " + tables[0] + " WHERE UID=$1"
 
 	for {
-		record, more := <-t.DeleteChan
+		record, more := <-t.Simulation.DeleteChan
 
 		if more {
 			batch.Queue(queryTemplate, record)
 		}
 
-		if batch.Len() == t.batchSize || (!more && batch.Len() > 0) {
+		if batch.Len() == t.options.BatchSize || (!more && batch.Len() > 0) {
 			fmt.Print("-")
 			br := pool.SendBatch(context.Background(), batch)
 			res, err := br.Exec()

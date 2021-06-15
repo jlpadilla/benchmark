@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"sync"
 
 	pgxpool "github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jlpadilla/benchmark/pkg/generator"
@@ -22,27 +21,17 @@ var pool *pgxpool.Pool
 // Transaction settings
 type transaction struct {
 	// Configurable fields
-	batchSize  int
-	goRoutines int
-	insertType string
+	options generator.Options
 	// Internal fields
-	InsertChan chan *generator.Record
-	UpdateChan chan *generator.Record
-	DeleteChan chan string
-	WG         *sync.WaitGroup
+	Simulation generator.Simulation
 }
 
-func NewTransaction() *transaction {
+func NewTransaction(options generator.Options) *transaction {
 	t := &transaction{
 		// Configurable fields
-		batchSize:  1000,
-		goRoutines: 8,
-		insertType: "batch",
+		options: options,
 		// Internal fields
-		InsertChan: make(chan *generator.Record, 100),
-		UpdateChan: make(chan *generator.Record, 100),
-		DeleteChan: make(chan string, 100),
-		WG:         &sync.WaitGroup{},
+		Simulation: generator.NewSimulation(),
 	}
 	t.startConnectors()
 	return t
@@ -83,8 +72,8 @@ func createPool() {
 }
 
 func (t *transaction) startConnectors() {
-	for i := 0; i < t.goRoutines; i++ {
-		if t.insertType == "batch" {
+	for i := 0; i < t.options.GoRoutines; i++ {
+		if t.options.InsertType == "batch" {
 			go t.batchInsert(strconv.Itoa(i))
 		} else {
 			go t.copyInsert(strconv.Itoa(i))

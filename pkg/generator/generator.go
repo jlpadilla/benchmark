@@ -60,18 +60,18 @@ func newRecord(index int, uid string) Record {
 	}
 }
 
-func Generate(insert int, update int, delete int, insertChan chan *Record, updateChan chan *Record, deleteChan chan string) {
+func Generate(opts Options, sim Simulation) {
 	var wg sync.WaitGroup
 	wg.Add(3)
-	go addRecords(insert, insertChan, &wg)
-	go updateRecords(update, updateChan, &wg)
-	go deleteRecords(delete, deleteChan, &wg)
+	go addRecords(opts.Insert, sim.InsertChan, &wg)
+	go updateRecords(opts.Update, sim.UpdateChan, &wg)
+	go deleteRecords(opts.Delete, sim.DeleteChan, &wg)
 
 	wg.Wait()
 
-	close(insertChan)
-	close(updateChan)
-	close(deleteChan)
+	close(sim.InsertChan)
+	close(sim.UpdateChan)
+	close(sim.DeleteChan)
 }
 
 func addRecords(insert int, insertChan chan *Record, wg *sync.WaitGroup) {

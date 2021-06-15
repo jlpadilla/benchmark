@@ -13,18 +13,18 @@ import (
 
 func Generate(w http.ResponseWriter, req *http.Request) {
 	opts := ParseQuery(req)
-	fmt.Printf("Starting with options: %+v", opts)
+	fmt.Printf("Starting generator with options: %+v\n", opts)
 	start := time.Now()
 
 	switch opts.Database {
 	case "postgresql":
-		sim := postgresql.NewTransaction()
-		generator.Generate(opts.Insert, opts.Update, opts.Delete, sim.InsertChan, sim.UpdateChan, sim.DeleteChan)
-		sim.WG.Wait()
+		sim := postgresql.NewTransaction(opts)
+		generator.Generate(opts, sim.Simulation)
+		sim.Simulation.WG.Wait()
 	case "redisgraph":
 		sim := redisgraph.NewTransaction(opts)
-		generator.Generate(opts.Insert, opts.Update, opts.Delete, sim.InsertChan, sim.UpdateChan, sim.DeleteChan)
-		sim.WG.Wait()
+		generator.Generate(opts, sim.Simulation)
+		sim.Simulation.WG.Wait()
 	default:
 		fmt.Println("\nDatabase not supported: ", opts.Database)
 	}
@@ -33,7 +33,9 @@ func Generate(w http.ResponseWriter, req *http.Request) {
 }
 
 func Query(w http.ResponseWriter, req *http.Request) {
-	sim := postgresql.NewTransaction()
+	opts := ParseQuery(req)
+	fmt.Printf("Starting Query with options %+v\n", opts)
+	sim := postgresql.NewTransaction(opts)
 	result := sim.BenchmarkQueries()
 	fmt.Printf("Query results:\n%s", result)
 	fmt.Fprintf(w, "Query results:\n%s", result)

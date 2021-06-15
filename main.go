@@ -12,8 +12,6 @@ import (
 	"github.com/jlpadilla/benchmark/pkg/server"
 )
 
-var targetDb = "postgresql"
-
 func main() {
 
 	if len(os.Args) < 2 {
@@ -28,18 +26,21 @@ func main() {
 		fmt.Println("")
 		startHttpServer()
 	} else {
-		_, insert := readInputs()
+		targetDb, insert := readInputs()
 		fmt.Println("Running benchmark with:")
 		fmt.Println("\tDatabase: ", targetDb)
 		fmt.Println("\tInsert : ", insert)
 
-		sim := postgresql.NewTransaction()
+		opts := generator.Options{Database: targetDb, Insert: insert, Update: 0, Delete: 0, BatchSize: 1000, GoRoutines: 8, InsertType: "batch"}
+		start := time.Now()
+
+		sim := postgresql.NewTransaction(opts)
 		// sim := redisgraph.NewTransaction()
 
 		// Start generating records.
-		start := time.Now()
-		generator.Generate(insert, 0, 0, sim.InsertChan, sim.InsertChan, sim.DeleteChan)
-		sim.WG.Wait()
+
+		generator.Generate(opts, sim.Simulation)
+		sim.Simulation.WG.Wait()
 		fmt.Printf("\nInsert %d records took: %s", insert, time.Since(start))
 
 		// Benchmark queries.

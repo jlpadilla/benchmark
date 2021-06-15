@@ -5,8 +5,8 @@ package redisgraph
 // )
 
 func (t *transaction) batchUpdate() {
-	t.WG.Add(1)
-	defer t.WG.Done()
+	t.Simulation.WG.Add(1)
+	defer t.Simulation.WG.Done()
 	conn := Pool.Get()
 	defer conn.Close()
 
@@ -18,7 +18,7 @@ func (t *transaction) batchUpdate() {
 	// resourceStrings := []string{}
 
 	for {
-		_, more := <-t.UpdateChan
+		_, more := <-t.Simulation.UpdateChan
 
 		// resourceStrings = append(resourceStrings, record)
 

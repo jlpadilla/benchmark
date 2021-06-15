@@ -8,8 +8,8 @@ import (
 )
 
 func (t *transaction) batchDelete() {
-	t.WG.Add(1)
-	defer t.WG.Done()
+	t.Simulation.WG.Add(1)
+	defer t.Simulation.WG.Done()
 	conn := Pool.Get()
 	defer conn.Close()
 
@@ -21,7 +21,7 @@ func (t *transaction) batchDelete() {
 	uids := []string{}
 
 	for {
-		record, more := <-t.DeleteChan
+		record, more := <-t.Simulation.DeleteChan
 		if more {
 			uids = append(uids, fmt.Sprintf("'%s'", record))
 		}

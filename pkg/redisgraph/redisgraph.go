@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -25,10 +24,7 @@ const (
 // Transaction settings
 type transaction struct {
 	options    generator.Options
-	InsertChan chan *generator.Record
-	UpdateChan chan *generator.Record
-	DeleteChan chan string
-	WG         *sync.WaitGroup
+	Simulation generator.Simulation
 }
 
 func NewTransaction(options generator.Options) *transaction {
@@ -36,10 +32,7 @@ func NewTransaction(options generator.Options) *transaction {
 		// Configurable fields
 		options: options,
 		// Internal fields
-		InsertChan: make(chan *generator.Record, 100),
-		UpdateChan: make(chan *generator.Record, 100),
-		DeleteChan: make(chan string, 100),
-		WG:         &sync.WaitGroup{},
+		Simulation: generator.NewSimulation(),
 	}
 
 	t.startConnectors()
@@ -97,13 +90,4 @@ func (t *transaction) startConnectors() {
 		go t.batchUpdate()
 		go t.batchDelete()
 	}
-	// for i := 0; i < t.goRoutines; i++ {
-	// 	if t.insertType == "batch" {
-	// 		go t.batchInsert(strconv.Itoa(i))
-	// 	} else {
-	// 		go t.copyInsert(strconv.Itoa(i))
-	// 	}
-	// 	go t.batchUpdate()
-	// 	go t.batchDelete()
-	// }
 }

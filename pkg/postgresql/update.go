@@ -9,13 +9,13 @@ import (
 )
 
 func (t *transaction) batchUpdate() {
-	t.WG.Add(1)
-	defer t.WG.Done()
+	t.Simulation.WG.Add(1)
+	defer t.Simulation.WG.Done()
 	batch := &pgx.Batch{}
 	queryTemplate := "UPDATE " + tables[0] + " SET CLUSTER=$2, NAME=$3, DATA=$4 WHERE UID=$1"
 
 	for {
-		record, more := <-t.UpdateChan
+		record, more := <-t.Simulation.UpdateChan
 
 		if more {
 			// Marshal record.Properties to JSON
@@ -27,7 +27,7 @@ func (t *transaction) batchUpdate() {
 			batch.Queue(queryTemplate, record.UID, record.Cluster, record.Name, string(json))
 		}
 
-		if batch.Len() == t.batchSize || (!more && batch.Len() > 0) {
+		if batch.Len() == t.options.BatchSize || (!more && batch.Len() > 0) {
 			fmt.Print(".")
 			br := pool.SendBatch(context.Background(), batch)
 			res, err := br.Exec()

@@ -32,7 +32,7 @@ func newRecord(index int, uid string) Record {
 	return Record{
 		UID:     uid,
 		Name:    fmt.Sprintf("name-%d", index),
-		Cluster: gofakeit.City(),
+		Cluster: fmt.Sprintf("cluster-%d", gofakeit.Number(0, 100)),
 		Properties: map[string]interface{}{
 			"name":    fmt.Sprintf("name-%d", index),
 			"kind":    gofakeit.Color(),
@@ -43,8 +43,8 @@ func newRecord(index int, uid string) Record {
 			"car":     gofakeit.CarModel(),
 			"color":   gofakeit.Color(),
 			"city":    gofakeit.City(),
-			"map":     map[string]string{"key1": "value1", "key2": "value2"},
-			"list":    []string{"a", "b", "c"},
+			// "map":     map[string]string{"key1": "value1", "key2": "value2"},
+			// "list":    []string{"a", "b", "c"},
 			// "property10": "value10",
 			// "property11": "value11",
 			// "property12": "value12",

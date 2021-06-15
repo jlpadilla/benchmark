@@ -26,30 +26,26 @@ func (t *transaction) batchInsert(instance string) {
 	for {
 		record, more := <-t.InsertChan
 
-		if !more {
-			break
-		}
-
-		encodedProps, err := encodeProperties(record.Properties)
-		if err != nil {
-			fmt.Println("Cannot encode resource ", record.UID, ", excluding it from insertion: ", err)
-			// encodingErrors[resource.UID] = err
-			continue
-		}
-		propStrings := []string{}
-		for k, v := range encodedProps {
-			switch typed := v.(type) { // At this point it's either string or int64. Need to wrap in quotes if it's string
-			case int64:
-				propStrings = append(propStrings, fmt.Sprintf("%s:%d", k, typed)) // e.g. key>:<value>
-			default:
-				propStrings = append(propStrings, fmt.Sprintf("%s:'%s'", k, typed)) // e.g. <key>:'<value>'
+		if more {
+			encodedProps, err := encodeProperties(record.Properties)
+			if err != nil {
+				fmt.Println("Cannot encode resource ", record.UID, ", excluding it from insertion: ", err)
+				continue
 			}
+			propStrings := []string{}
+			for k, v := range encodedProps {
+				switch typed := v.(type) { // At this point it's either string or int64. Need to wrap in quotes if it's string
+				case int64:
+					propStrings = append(propStrings, fmt.Sprintf("%s:%d", k, typed)) // e.g. key>:<value>
+				default:
+					propStrings = append(propStrings, fmt.Sprintf("%s:'%s'", k, typed)) // e.g. <key>:'<value>'
+				}
+			}
+			resource := fmt.Sprintf("(:%s {_uid:'%s', %s})", record.Properties["kind"], record.UID, strings.Join(propStrings, ", ")) // e.g. (:Pod {_uid: 'abc123', prop1:5, prop2:'cheese'})
+
+			resourceStrings = append(resourceStrings, resource)
 		}
-		resource := fmt.Sprintf("(:%s {_uid:'%s', %s})", record.Properties["kind"], record.UID, strings.Join(propStrings, ", ")) // e.g. (:Pod {_uid: 'abc123', prop1:5, prop2:'cheese'})
-
-		resourceStrings = append(resourceStrings, resource)
-
-		if len(resourceStrings) == t.batchSize {
+		if len(resourceStrings) == t.batchSize || !more {
 			q := fmt.Sprintf("%s %s", "CREATE", strings.Join(resourceStrings, ", "))
 			_, err := g.Query(q)
 
@@ -58,6 +54,10 @@ func (t *transaction) batchInsert(instance string) {
 			}
 			resourceStrings = []string{}
 		}
+		if !more {
+			break
+		}
+
 	}
 
 }

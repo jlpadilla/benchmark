@@ -75,7 +75,7 @@ func InitializeDB() {
 // Initializes the connection pool.
 func createPool() {
 	database_url := "postgres://postgres:" + postgrePW + "@" + dbHost + ":" + dbPort + "/" + databaseName
-	fmt.Println("Connecting to PostgreSQL at: ", database_url)
+	fmt.Println("Connecting to PostgreSQL at: ", strings.ReplaceAll(database_url, postgrePW, "*****"))
 	config, _ := pgxpool.ParseConfig(database_url)
 	config.MaxConns = maxConnections
 	conn, err := pgxpool.ConnectConfig(context.Background(), config)

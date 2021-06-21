@@ -1,35 +1,36 @@
 # Benchmark Results
-Document benhmark results using this project.
 
-## Benchmark database operations without any relationships.
+## Benchmark database operations (excludes relationships)
 
 Operation                     | Redisgraph | PostgreSQL (Docker on laptop)      | PostgreSQL on AWS
 ---                           | ---        | ---                                | ---
-Insert 100k                   | 2.7s       | 11s (1 table)</br>8s (100 tables)  |
-Insert 500k                   | 14s        | 50s (1 table)</br>48s (100 tables) |
-Insert 1M                     | 29s        | 3m (1 table)</br>1m40s (100 tables)|
-Insert 2M                     | 1m34s      | <b>TOO SLOW </b>                   |
-With 100k, edit 1k            |            | 7s                                 |
-With 500k, edit 1k            |            | 1m10s                              |
-With 1M, edit 1k              |            | 1m42s                         |
-With 100k, delete 1k          | 15s initial</br>4s after initial           | 750ms  |             
-With 500k, delete 1k          | 1m         | 34s                           |
-With 1M, delete 1k            | 2m         | 1m9s                          |
-Query using index (100k)      |            | 8ms
-Query non-indexed (100k)      |            | 45ms
-Query distinct values (100k)  |            | 80ms
-Query using index (500k)      |            | 44ms
-Query non-indexed (500k)      |            | 629ms
-Query distinct values (500k)  |            | 413ms
-Query using index (1M)        |            | 42ms
-Query non-indexed (1M)        |            | 2.17s
-Query distinct values (1M)    |            | 2.50s
+Insert 100k                   | 2.7s       | 11s (1 table)</br>8s (100 tables)  | 2.5s
+Insert 500k                   | 14s        | 50s (1 table)</br>48s (100 tables) | 10.3s
+Insert 1M                     | 29s        | 3m (1 table)</br>1m40s (100 tables)| 21.3s
+Insert 2M                     | 1m34s      | <font color="tomato">TOO SLOW!</font> | 1m2s
+Update 100 (with 100k)        |            | 741ms                              | 35s <font color="tomato">WHY?!</font>
+Update 100 (with 500k)        |            | 3.7s                               | 
+Update 1K (with 100k)         |            | 7s                                 | 
+Update 1K (with 500k)         |            | 1m10s                              | 
+Update 1K (with 1M)           |            | 1m42s                              |
+Delete 100 (with 100k)        |            | 735ms                              | 37s <font color="tomato">WHY?!</font>
+Delete 100 (with 500k)        |            | 3.6s                               |
+Delete 1k (With 100k)         | 15s initial</br>4s after | 750ms                |            
+Delete 1k (With 500k)         | 1m         | 34s                                |
+Delete 1k (With 1M)           | 2m         | 1m9s                               | 
+Query using index (100k)      |            | 8ms                                | 41ms
+Query non-indexed (100k)      |            | 45ms                               | 120ms
+Query distinct values (100k)  |            | 80ms                               | 119ms
+Query using index (500k)      |            | 44ms                               | 49ms
+Query non-indexed (500k)      |            | 629ms                              | 389ms
+Query distinct values (500k)  |            | 413ms                              | 350ms
+Query using index (1M)        |            | 42ms                               | 58ms
+Query non-indexed (1M)        |            | 2.17s                              | 860ms
+Query distinct values (1M)    |            | 2.50s                              | 659ms
 
-### PostgreSQL observations:
-- Time to insert data is proportional to the total existing records. Theres only a marginal improvement from dividing the data in multiple tables.
-- 
 
-## Benchmark database operations including relationships
+
+## Benchmark database operations for relationships
 
 TBD
 

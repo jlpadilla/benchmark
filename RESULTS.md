@@ -3,18 +3,18 @@ Document benhmark results using this project.
 
 ## Benchmark database operations without any relationships.
 
-Operation                     | Redisgraph | PostgreSQL (1 table) | Postgre (100 tables)
----                           | ---        | ---                  | ---
-Insert 100k                   | 2.7s       | 11s                  | 8s
-Insert 500k                   | 14s        | 50s                  | 48s
-Insert 1M                     | 29s        | 3m                   | 1m40s
-Insert 2M                     | 1m34s      | <b>TOO SLOW </b>     |
-With 100k, edit 1k            |            | 7s                   |
-With 500k, edit 1k            |            | 1m10s                |
-With 1M, edit 1k              |            | 1m42s                |
-With 100k, delete 1k          | 15s initial</br>4s after initial | 750ms  |             
-With 500k, delete 1k          | 1m         | 34s                  |
-With 1M, delete 1k            | 2m         | 1m9s                 |
+Operation                     | Redisgraph | PostgreSQL (Docker on laptop)      | PostgreSQL on AWS
+---                           | ---        | ---                                | ---
+Insert 100k                   | 2.7s       | 11s (1 table)</br>8s (100 tables)  |
+Insert 500k                   | 14s        | 50s (1 table)</br>48s (100 tables) |
+Insert 1M                     | 29s        | 3m (1 table)</br>1m40s (100 tables)|
+Insert 2M                     | 1m34s      | <b>TOO SLOW </b>                   |
+With 100k, edit 1k            |            | 7s                                 |
+With 500k, edit 1k            |            | 1m10s                              |
+With 1M, edit 1k              |            | 1m42s                         |
+With 100k, delete 1k          | 15s initial</br>4s after initial           | 750ms  |             
+With 500k, delete 1k          | 1m         | 34s                           |
+With 1M, delete 1k            | 2m         | 1m9s                          |
 Query using index (100k)      |            | 8ms
 Query non-indexed (100k)      |            | 45ms
 Query distinct values (100k)  |            | 80ms

@@ -11,6 +11,8 @@ import (
 )
 
 // Global settings
+const dbHost = "localhost"
+const dbPort = "5432"
 const postgrePW = "dev-pass!"
 const databaseName = "benchmark"
 const maxConnections = 8
@@ -72,7 +74,8 @@ func InitializeDB() {
 
 // Initializes the connection pool.
 func createPool() {
-	database_url := "postgres://postgres:" + postgrePW + "@localhost:5432/" + databaseName
+	database_url := "postgres://postgres:" + postgrePW + "@" + dbHost + ":" + dbPort + "/" + databaseName
+	fmt.Println("Connecting to PostgreSQL at: ", database_url)
 	config, _ := pgxpool.ParseConfig(database_url)
 	config.MaxConns = maxConnections
 	conn, err := pgxpool.ConnectConfig(context.Background(), config)
@@ -81,6 +84,7 @@ func createPool() {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
+
 	pool = conn
 }
 

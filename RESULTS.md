@@ -2,7 +2,7 @@
 
 ## Benchmark database operations (excludes relationships)
 
-Operation                     | Redisgraph | PostgreSQL Docker on laptop        | PostgreSQL on AWS    | PostgreSQL Docker on AWS 
+Operation                     | Redisgraph on laptop | PostgreSQL Docker on laptop        | PostgreSQL on AWS    | PostgreSQL Docker on AWS 
 ---                           | ---        | ---                                | ---                  | ---
 Insert 100k                   | 2.7s       | 11s (1 table)</br>8s (100 tables)  | 2.5s                 |
 Insert 500k                   | 14s        | 50s (1 table)</br>48s (100 tables) | 10.3s                |

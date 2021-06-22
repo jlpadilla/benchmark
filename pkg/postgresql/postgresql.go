@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	pgxpool "github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jlpadilla/benchmark/pkg/generator"
